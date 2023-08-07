@@ -1,11 +1,13 @@
 require 'omniauth-oauth2'
 require 'json'
+require 'net/http'
+require 'uri'
 
 module OmniAuth
   module Strategies
     class Line < OmniAuth::Strategies::OAuth2
       option :name, 'line'
-      option :scope, 'profile openid'
+      option :scope, 'profile openid email'
 
       option :client_options, {
         site: 'https://access.line.me',
@@ -23,15 +25,31 @@ module OmniAuth
         # Fixes regression in omniauth-oauth2 v1.4.0 by https://github.com/intridea/omniauth-oauth2/commit/85fdbe117c2a4400d001a6368cc359d88f40abc7
         options[:callback_url] || (full_host + script_name + callback_path)
       end
-      
+
       uid { raw_info['userId'] }
 
       info do
         {
           name:        raw_info['displayName'],
           image:       raw_info['pictureUrl'],
-          description: raw_info['statusMessage']
+          description: raw_info['statusMessage'],
+          email:       verify_id_token['email'] # 使用verify_id_token方法獲取電子郵件
         }
+      end
+
+      # 驗證ID令牌並返回解碼的結果
+      def verify_id_token
+        id_token = access_token.params['id_token']
+        uri = URI('https://api.line.me/oauth2/v2.1/verify')
+
+        req = Net::HTTP::Post.new(uri.path, {'Content-Type' => 'application/x-www-form-urlencoded'})
+        req.set_form_data('id_token' => id_token, 'client_id' => options.client_id)
+
+        res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+          http.request(req)
+        end
+
+        JSON.parse(res.body)
       end
 
       # Require: Access token with PROFILE permission issued.
