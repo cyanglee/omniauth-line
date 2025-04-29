@@ -14,6 +14,9 @@ module OmniAuth
         authorize_url: '/oauth2/v2.1/authorize',
         token_url: '/oauth2/v2.1/token'
       }
+      
+      # Add bot_prompt parameter to authorization request
+      option :authorize_options, [:bot_prompt]
 
       # host changed
       def callback_phase
@@ -24,6 +27,14 @@ module OmniAuth
       def callback_url
         # Fixes regression in omniauth-oauth2 v1.4.0 by https://github.com/intridea/omniauth-oauth2/commit/85fdbe117c2a4400d001a6368cc359d88f40abc7
         options[:callback_url] || (full_host + script_name + callback_path)
+      end
+      
+      # Override to include bot_prompt parameter
+      def authorize_params
+        super.tap do |params|
+          # Set bot_prompt to aggressive if specified
+          params[:bot_prompt] = 'aggressive' if options[:bot_prompt] == 'aggressive'
+        end
       end
 
       uid { raw_info['userId'] }
