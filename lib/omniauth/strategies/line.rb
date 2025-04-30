@@ -34,6 +34,8 @@ module OmniAuth
         super.tap do |params|
           # Set bot_prompt to aggressive if specified
           params[:bot_prompt] = 'aggressive' if options[:bot_prompt] == 'aggressive'
+          # Explicitly set the scope parameter
+          params[:scope] = options[:scope] if options[:scope]
         end
       end
 
