@@ -30,12 +30,12 @@ module OmniAuth
       end
 
       # Override to include bot_prompt parameter and ensure scope is properly set
-      def authorize_params
-        super.tap do |params|
+      def authorize_options
+        super.tap do |option|
           # Set bot_prompt to aggressive if specified
-          params[:bot_prompt] = 'aggressive' if options[:bot_prompt] == 'aggressive'
+          option[:bot_prompt] = 'aggressive' if options[:bot_prompt] == 'aggressive'
           # Explicitly set the scope parameter
-          params[:scope] = options[:scope] if options[:scope]
+          option[:scope] = options[:scope] if options[:scope]
         end
       end
 
